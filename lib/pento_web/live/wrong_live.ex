@@ -3,26 +3,49 @@ defmodule PentoWeb.WrongLive do
 
   def mount(_params, _session, socket) do
     # initial state
-    {:ok, assign(socket, score: 0, message: "Make a guess:", time: time())}
+    {:ok,
+     assign(socket,
+       score: 0,
+       message: "Guess a number.",
+       secret_number: :rand.uniform(10) |> to_string(),
+       answered_correctly: false
+     )}
   end
 
-  def handle_event("guess", %{"number" => guess}, socket) do
-    message = "Your guess: #{guess}. Wrong. Guess again. "
-    score = socket.assigns.score - 1
-    time_now = time()
+  def handle_event(
+        "guess",
+        %{"number" => guess},
+        %{assigns: %{secret_number: guess}} = socket
+      ) do
+    message_correct = "You won! The number was: #{guess}"
+    score_correct = socket.assigns.score + 5
 
     {
       :noreply,
       assign(
         socket,
-        score: score,
-        message: message,
-        time: time_now
+        score: score_correct,
+        message: message_correct,
+        answered_correctly: true
       )
     }
   end
 
-  def time() do
-    DateTime.utc_now() |> to_string
+  def handle_event(
+        "guess",
+        %{"number" => guess},
+        %{assigns: %{secret_number: secret_number}} = socket
+      ) do
+    message_wrong = "Your guess: #{guess}. Wrong. Guess again."
+    score_wrong = socket.assigns.score - 1
+
+    {
+      :noreply,
+      assign(
+        socket,
+        score: score_wrong,
+        message: message_wrong
+      )
+    }
   end
 end
